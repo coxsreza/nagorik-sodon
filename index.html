@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<title>নাগরিক সদন সিস্টেম</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+
+<style>
+body{font-family:Arial;background:#eef3f1}
+.box,.card{width:560px;margin:20px auto;background:#fff;padding:20px;border:2px solid #0b8043}
+h2{text-align:center;color:#0b8043}
+input{width:100%;padding:8px;margin:6px 0}
+button{width:100%;padding:10px;background:#0b8043;color:#fff;border:none;font-size:16px;cursor:pointer}
+.header{text-align:center;border-bottom:2px solid #0b8043;margin-bottom:10px}
+.header img{height:60px;margin-bottom:5px}
+.body{display:flex;justify-content:space-between;margin-top:10px}
+.info{font-size:15px}
+.photo{width:100px;height:120px;border:1px solid #333;object-fit:cover}
+.footer{display:flex;justify-content:space-between;margin-top:10px}
+.footer img{height:50px}
+.qr{text-align:center;margin-top:10px}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+<h2>নাগরিক তথ্য ফর্ম</h2>
+<input id="unionName" placeholder="ইউনিয়ন পরিষদ / পৌরসভা নাম">
+<input type="file" id="logoInput">
+<input id="name" placeholder="নাম">
+<input id="nid" placeholder="জাতীয় পরিচয়পত্র নং">
+<input id="father" placeholder="পিতার নাম">
+<input id="mother" placeholder="মাতার নাম">
+<input id="address" placeholder="ঠিকানা">
+<input type="file" id="photoInput">
+<input type="file" id="sealInput">
+<input type="file" id="signInput">
+<button onclick="generate()">কার্ড তৈরি করুন</button>
+</div>
+
+<div class="card" id="card" style="display:none">
+<div class="header">
+<img id="logo">
+<h2 id="unionTitle"></h2>
+<p>নাগরিক সদন পরিচয়পত্র</p>
+</div>
+
+<p><b>সিরিয়াল নং:</b> <span id="serial"></span></p>
+<p><b>ভেরিফিকেশন কোড:</b> <span id="verify"></span></p>
+
+<div class="body">
+<div class="info" id="info"></div>
+<img id="photo" class="photo">
+</div>
+
+<div class="footer">
+<img id="seal">
+<img id="sign">
+</div>
+
+<div class="qr" id="qrcode"></div>
+<br>
+<button onclick="downloadPDF()">PDF ডাউনলোড</button>
+</div>
+
+<script>
+let serialNo = Math.floor(100000 + Math.random()*900000);
+let verifyCode = Math.random().toString(36).substring(2,10).toUpperCase();
+
+function loadImg(input,img){
+ if(input.files[0]){
+  let r = new FileReader();
+  r.onload = e=> img.src = e.target.result;
+  r.readAsDataURL(input.files[0]);
+ }
+}
+
+function generate(){
+ card.style.display="block";
+ unionTitle.innerText = unionName.value;
+ serial.innerText = serialNo;
+ verify.innerText = verifyCode;
+
+ info.innerHTML=`
+ <p><b>নাম:</b> ${name.value}</p>
+ <p><b>NID:</b> ${nid.value}</p>
+ <p><b>পিতা:</b> ${father.value}</p>
+ <p><b>মাতা:</b> ${mother.value}</p>
+ <p><b>ঠিকানা:</b> ${address.value}</p>
+ `;
+
+ qrcode.innerHTML="";
+ new QRCode(qrcode,{
+  text:`${unionName.value}
+Serial:${serialNo}
+Verify:${verifyCode}
+নাম:${name.value}
+NID:${nid.value}`,
+  width:120,height:120
+ });
+
+ loadImg(logoInput,logo);
+ loadImg(photoInput,photo);
+ loadImg(sealInput,seal);
+ loadImg(signInput,sign);
+}
+
+function downloadPDF(){
+ const { jsPDF } = window.jspdf;
+ const doc = new jsPDF();
+
+ doc.setFontSize(16);
+ doc.text(unionName.value, 60, 15);
+ doc.setFontSize(12);
+ doc.text("নাগরিক সদন পরিচয়পত্র", 60, 22);
+
+ doc.autoTable({
+  startY:35,
+  body:[
+   ["সিরিয়াল", serialNo],
+   ["ভেরিফিকেশন", verifyCode],
+   ["নাম", name.value],
+   ["NID", nid.value],
+   ["পিতা", father.value],
+   ["মাতা", mother.value],
+   ["ঠিকানা", address.value]
+  ]
+ });
+
+ doc.save("nagorik_sodon.pdf");
+}
+</script>
+
+</body>
+</html>
